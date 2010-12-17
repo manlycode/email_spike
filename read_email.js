@@ -15,14 +15,29 @@ var reportError = function(err) {
 };
 
 imap.connect(function(err) {
-  if (err) { reportError(err); };
-  
+  if (err) { reportError(err); }
+  console.log("opening the mailbox");
+
   imap.openBox('INBOX', false, function(box) {
+    console.log("Searching the inbox");
     imap.search(['UNDELETED'], function(err, email_ids) {
-      var options = {"request": {"headers": false, "body": true}};
-      imap.fetch(email_ids, options, function(err, result) {
-        console.log(result);
+      var options = { "request": {
+                        "headers": false, "body": true}};
+      console.log("fetching emails");
+      imap.fetch(email_ids, options, function(err, emails) {
+        process.emit('emails-found', emails);
       });
     });
   });  
+});
+
+process.on('emails-found', function(emails) {
+  console.log("found some emails");
+  console.dir(emails);
+  process.emit('emails-finished');
+});
+
+process.on('emails-finished', function() {
+  console.log("finished them");
+  imap.logout();
 });
